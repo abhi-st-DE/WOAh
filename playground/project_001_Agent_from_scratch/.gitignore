@@ -1,0 +1,5 @@
+.env
+__pycache__/
+.venv/
+.python-version
+reusable_dump.txt
