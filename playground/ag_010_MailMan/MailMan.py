@@ -2,7 +2,6 @@ import os
 import time
 import json
 import base64
-from typing import Dict, Any, Optional
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from gmail_auth import get_gmail_service
