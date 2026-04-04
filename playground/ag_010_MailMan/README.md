@@ -1,4 +1,4 @@
-# Agent_001_MailMan
+# Agent_010_MailMan
 
 A hands-on project demonstrating a custom-built AI agent capable of monitoring, parsing, and archiving Gmail messages locally.
 
