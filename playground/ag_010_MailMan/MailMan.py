@@ -191,6 +191,26 @@ schema_sweep_inbox = {
     }
 }
 
+def read_email_archive():
+    """Reads the local email_archive.txt file to answer questions about the user's previously fetched emails."""
+    archive_file = "email_archive.txt"
+    if not os.path.exists(archive_file):
+        return "The email archive is currently empty or does not exist."
+    with open(archive_file, "r", encoding="utf-8") as file:
+        return file.read()
+
+class ReadEmailArchiveArgs(BaseModel):
+    pass
+
+schema_read_email_archive = {
+    "type": "function",
+    "function": {
+        "name": "read_email_archive",
+        "description": "Reads the local email_archive.txt file. Use this tool when the user asks questions about their past or saved emails, so you can fetch the email content and answer them accurately.",
+        "parameters": ReadEmailArchiveArgs.model_json_schema()
+    }
+}
+
 class Agent:
     def __init__(self, client: InferenceClient, system: str = "", tools: list = None) -> None:
         self.client = client
@@ -254,10 +274,12 @@ class Agent:
 # Initialisation
 system =  (
     " You are a helpful assistant that is capable of retrieving information about the mails and provide it back. "
+    " You can sweep the inbox to fetch new emails, AND you can read the local email archive to answer user queries about their saved emails. "
+    " CRITICAL RULE: If you find that the email archive is empty or does not exist, you MUST automatically call the `sweep_inbox` tool to fetch new emails. DO NOT ask the user for permission; do it automatically. "
     " When the user give you a number of seconds to wait you calculate the wait time and wait patiently. "
 )
 
-tools = [schema_sweep_inbox]
+tools = [schema_sweep_inbox, schema_read_email_archive]
 
 agent = Agent(client, system, tools)
 
@@ -266,6 +288,4 @@ response = agent("save my recent mails to the file, and also wait for the next 3
 print(f"final answer: {response}")
 
 mess = agent.messages
-
-print(f"agent messages are:", mess)
 

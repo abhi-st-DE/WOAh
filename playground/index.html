@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unified Agent Interface</title>
+    <style>
+        :root {
+            --bg-color: #f0fdfa;
+            --surface-color: rgba(255, 255, 255, 0.8);
+            --surface-border: rgba(20, 184, 166, 0.2);
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --accent: #0d9488;
+            --accent-hover: #0f766e;
+            --success: #10b981;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #e0f2fe, #ccfbf1, #dcfce7);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .layout-wrapper {
+            width: 100%;
+            max-width: 1400px;
+            padding: 2rem;
+            box-sizing: border-box;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .layout-wrapper {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        header {
+            grid-column: 1 / -1;
+            text-align: center;
+            margin-bottom: 2rem;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #0f766e, #0369a1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0 0 0.5rem 0;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        .section-heading {
+            color: var(--accent-hover);
+            margin-top: 0;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 2px solid var(--surface-border);
+            padding-bottom: 0.5rem;
+        }
+
+        .glass-panel {
+            background: var(--surface-color);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--surface-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        select, input, button {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid var(--surface-border);
+            color: var(--text-main);
+            padding: 0.8rem 1rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        select:focus, input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.3);
+        }
+
+        select {
+            cursor: pointer;
+            width: 250px;
+        }
+
+        input {
+            flex-grow: 1;
+            min-width: 150px;
+        }
+
+        button {
+            background: var(--accent);
+            border: none;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 0.8rem 1.5rem;
+        }
+
+        button:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        button:disabled {
+            background: var(--text-muted);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .results-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.4s ease;
+        }
+
+        .results-container.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .panel-title {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .thinking-content {
+            background: rgba(241, 245, 249, 0.8);
+            border: 1px solid var(--surface-border);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.85rem;
+            color: #0369a1;
+            white-space: pre-wrap;
+            overflow-y: auto;
+            max-height: 300px;
+            margin: 0;
+        }
+
+        .result-content {
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(13, 148, 136, 0.3);
+            border-radius: 8px;
+            padding: 1.5rem;
+            font-size: 1rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.05);
+            position: relative;
+        }
+
+        .result-content::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout-wrapper">
+        <header>
+            <h1>Local-Forge</h1>
+            <p class="subtitle">Agent for All</p>
+        </header>
+
+        <!-- LEFT COLUMN: Agent Workspace -->
+        <div class="column-agent">
+            <h2 class="section-heading">Agent Workspace</h2>
+            <div class="glass-panel">
+                <form id="agent-form">
+                    <div class="controls">
+                        <select id="agent-select" required>
+                            <option value="" disabled selected>Select an Agent</option>
+                            <option value="ag_001_WeatherReporter">001 - WeatherReporter</option>
+                            <option value="ag_010_MailMan">010 - MailMan</option>
+                            <option value="ag_011_Event_Handler">011 - EventHandler</option>
+                            <option value="ag_100_DeepResearcher">100 - DeepResearcher</option>
+                            <option value="ag_101_PdfAuditor">101 - PdfAuditor</option>
+                        </select>
+                        <input type="text" id="user-prompt" placeholder="Enter your request here..." autocomplete="off" required>
+                        <button type="submit" id="submit-btn">
+                            <span id="btn-text">Execute</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="results-area" class="results-container hidden">
+                <div class="glass-panel">
+                    <div class="panel-title">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        Thinking & Logs
+                    </div>
+                    <pre class="thinking-content" id="thinking-box">Initializing...</pre>
+                </div>
+
+                <div class="glass-panel" style="border-color: rgba(13, 148, 136, 0.4);">
+                    <div class="panel-title" style="color: var(--accent);">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        Final Result
+                    </div>
+                    <div class="result-content" id="result-box">Waiting for output...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: MCP Documentation -->
+        <div class="column-mcp">
+            <h2 class="section-heading">MCP Documentation</h2>
+            <div class="glass-panel">
+                <form id="mcp-form">
+                    <div class="controls">
+                        <input type="text" id="mcp-library" placeholder="Library (e.g. fastapi)" required style="flex-grow: 0; width: 140px;">
+                        <input type="text" id="mcp-query" placeholder="Query (e.g. authentication)" autocomplete="off" required>
+                        <button type="submit" id="mcp-submit-btn">
+                            <span id="mcp-btn-text">Search</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="mcp-results-area" class="results-container hidden">
+                <div class="glass-panel" style="border-color: rgba(13, 148, 136, 0.4);">
+                    <div class="panel-title" style="color: var(--accent);">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                        </svg>
+                        Official Docs Result
+                    </div>
+                    <div class="result-content" id="mcp-result-box" style="max-height: 550px; overflow-y: auto;">Waiting for output...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // AGENT FORM HANDLER
+        document.getElementById('agent-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const agent = document.getElementById('agent-select').value;
+            const prompt = document.getElementById('user-prompt').value;
+            const submitBtn = document.getElementById('submit-btn');
+            const btnText = document.getElementById('btn-text');
+            const resultsArea = document.getElementById('results-area');
+            const thinkingBox = document.getElementById('thinking-box');
+            const resultBox = document.getElementById('result-box');
+
+            if (!agent || !prompt.trim()) return;
+
+            submitBtn.disabled = true;
+            btnText.innerHTML = '<span class="spinner"></span> Working...';
+            thinkingBox.textContent = 'Launching agent and initializing tools...';
+            resultBox.textContent = 'Waiting for final output...';
+            
+            resultsArea.classList.remove('hidden');
+            setTimeout(() => resultsArea.classList.add('visible'), 50);
+
+            try {
+                const response = await fetch('/run_agent', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ agent_id: agent, prompt: prompt })
+                });
+
+                if (!response.ok) throw new Error(`Server error: ${response.statusText}`);
+                const data = await response.json();
+                
+                thinkingBox.textContent = data.thinking || 'No internal logs captured.';
+                resultBox.textContent = data.result || 'No final result captured.';
+            } catch (error) {
+                thinkingBox.textContent = `Error: ${error.message}`;
+                resultBox.textContent = 'Execution failed.';
+            } finally {
+                submitBtn.disabled = false;
+                btnText.textContent = 'Execute';
+            }
+        });
+
+        // MCP FORM HANDLER
+        document.getElementById('mcp-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const library = document.getElementById('mcp-library').value;
+            const query = document.getElementById('mcp-query').value;
+            const submitBtn = document.getElementById('mcp-submit-btn');
+            const btnText = document.getElementById('mcp-btn-text');
+            const resultsArea = document.getElementById('mcp-results-area');
+            const resultBox = document.getElementById('mcp-result-box');
+
+            if (!library.trim() || !query.trim()) return;
+
+            submitBtn.disabled = true;
+            btnText.innerHTML = '<span class="spinner"></span> Searching...';
+            resultBox.textContent = 'Executing MCP Webcrawler...';
+            
+            resultsArea.classList.remove('hidden');
+            setTimeout(() => resultsArea.classList.add('visible'), 50);
+
+            try {
+                const response = await fetch('/run_mcp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ library: library, query: query })
+                });
+
+                if (!response.ok) throw new Error(`Server error: ${response.statusText}`);
+                const data = await response.json();
+                
+                resultBox.textContent = data.result || 'No result captured.';
+            } catch (error) {
+                resultBox.textContent = `Error: ${error.message}`;
+            } finally {
+                submitBtn.disabled = false;
+                btnText.textContent = 'Search';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -168,5 +168,3 @@ response = agent("Set a leave on 30 May from 10:00 AM to 2 June 10 Am with a sub
 print(f"Agent response: {response}")
 
 mess = agent.messages
-
-print(f"agent messages are:", mess)

@@ -188,5 +188,3 @@ response = agent("What is the weather in Haridwar now?")
 print(f"final answer: {response}")
 
 mess = agent.messages
-
-print(f"agent messages are:", mess)
