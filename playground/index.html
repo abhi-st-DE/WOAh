@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -95,7 +96,9 @@
             flex-wrap: wrap;
         }
 
-        select, input, button {
+        select,
+        input,
+        button {
             background: rgba(255, 255, 255, 0.9);
             border: 1px solid var(--surface-border);
             color: var(--text-main);
@@ -106,7 +109,8 @@
             transition: all 0.2s ease;
         }
 
-        select:focus, input:focus {
+        select:focus,
+        input:focus {
             border-color: var(--accent);
             box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.3);
         }
@@ -215,20 +219,33 @@
         .result-content::before {
             content: '';
             position: absolute;
-            top: 0; left: 0; right: 0; height: 2px;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
             background: linear-gradient(90deg, transparent, var(--accent), transparent);
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
+
 <body>
     <div class="layout-wrapper">
         <header>
@@ -250,7 +267,8 @@
                             <option value="ag_100_DeepResearcher">100 - DeepResearcher</option>
                             <option value="ag_101_PdfAuditor">101 - PdfAuditor</option>
                         </select>
-                        <input type="text" id="user-prompt" placeholder="Enter your request here..." autocomplete="off" required>
+                        <input type="text" id="user-prompt" placeholder="Enter your request here..." autocomplete="off"
+                            required>
                         <button type="submit" id="submit-btn">
                             <span id="btn-text">Execute</span>
                         </button>
@@ -261,7 +279,8 @@
             <div id="results-area" class="results-container hidden">
                 <div class="glass-panel">
                     <div class="panel-title">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="10"></circle>
                             <polyline points="12 6 12 12 16 14"></polyline>
                         </svg>
@@ -272,7 +291,8 @@
 
                 <div class="glass-panel" style="border-color: rgba(13, 148, 136, 0.4);">
                     <div class="panel-title" style="color: var(--accent);">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                             <polyline points="22 4 12 14.01 9 11.01"></polyline>
                         </svg>
@@ -289,8 +309,10 @@
             <div class="glass-panel">
                 <form id="mcp-form">
                     <div class="controls">
-                        <input type="text" id="mcp-library" placeholder="Library (e.g. fastapi)" required style="flex-grow: 0; width: 140px;">
-                        <input type="text" id="mcp-query" placeholder="Query (e.g. authentication)" autocomplete="off" required>
+                        <input type="text" id="mcp-library" placeholder="Library (e.g. fastapi)" required
+                            style="flex-grow: 0; width: 140px;">
+                        <input type="text" id="mcp-query" placeholder="Query (e.g. authentication)" autocomplete="off"
+                            required>
                         <button type="submit" id="mcp-submit-btn">
                             <span id="mcp-btn-text">Search</span>
                         </button>
@@ -301,13 +323,15 @@
             <div id="mcp-results-area" class="results-container hidden">
                 <div class="glass-panel" style="border-color: rgba(13, 148, 136, 0.4);">
                     <div class="panel-title" style="color: var(--accent);">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
                             <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
                         </svg>
                         Official Docs Result
                     </div>
-                    <div class="result-content" id="mcp-result-box" style="max-height: 550px; overflow-y: auto;">Waiting for output...</div>
+                    <div class="result-content" id="mcp-result-box" style="max-height: 550px; overflow-y: auto;">Waiting
+                        for output...</div>
                 </div>
             </div>
         </div>
@@ -331,7 +355,7 @@
             btnText.innerHTML = '<span class="spinner"></span> Working...';
             thinkingBox.textContent = 'Launching agent and initializing tools...';
             resultBox.textContent = 'Waiting for final output...';
-            
+
             resultsArea.classList.remove('hidden');
             setTimeout(() => resultsArea.classList.add('visible'), 50);
 
@@ -344,7 +368,7 @@
 
                 if (!response.ok) throw new Error(`Server error: ${response.statusText}`);
                 const data = await response.json();
-                
+
                 thinkingBox.textContent = data.thinking || 'No internal logs captured.';
                 resultBox.textContent = data.result || 'No final result captured.';
             } catch (error) {
@@ -371,7 +395,7 @@
             submitBtn.disabled = true;
             btnText.innerHTML = '<span class="spinner"></span> Searching...';
             resultBox.textContent = 'Executing MCP Webcrawler...';
-            
+
             resultsArea.classList.remove('hidden');
             setTimeout(() => resultsArea.classList.add('visible'), 50);
 
@@ -384,7 +408,7 @@
 
                 if (!response.ok) throw new Error(`Server error: ${response.statusText}`);
                 const data = await response.json();
-                
+
                 resultBox.textContent = data.result || 'No result captured.';
             } catch (error) {
                 resultBox.textContent = `Error: ${error.message}`;
@@ -395,4 +419,5 @@
         });
     </script>
 </body>
+
 </html>
