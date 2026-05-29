@@ -14,7 +14,7 @@ if not HF_TOKEN:
     raise ValueError("HF_TOKEN is not accessible from environment variables.")
 client = InferenceClient(
     api_key=HF_TOKEN,
-    model="moonshotai/Kimi-K2-Thinking"
+    model="Qwen/Qwen2.5-72B-Instruct"
 )
 
 def add_calendar_event(start_date_time: datetime.datetime, name: str, end_date_time: datetime.datetime = None) -> str:
@@ -164,7 +164,7 @@ agent = Agent(client, system, tools)
 
 
 # To test your actual agent!
-response = agent("Set a leave on 1 May from 10:00 AM to 2 May 10 Am with a subject of Buddha Purnima leave.")
+response = agent("Set a leave on 30 May from 10:00 AM to 2 June 10 Am with a subject of Buddha Purnima leave.")
 print(f"Agent response: {response}")
 
 mess = agent.messages

@@ -5,14 +5,16 @@ from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 from huggingface_hub import InferenceClient
 
-# inference from hugging face validation.
+# Inference from hugging face validation.
 load_dotenv()
 HF_TOKEN = os.getenv("HF_TOKEN") 
 if not HF_TOKEN:
     raise ValueError("HF_TOKEN is not accessible from environment variables.")
+
+# FIX 1: Changed to a model that natively supports function calling on the serverless API
 client = InferenceClient(
     api_key=HF_TOKEN,
-    model="moonshotai/Kimi-K2-Thinking"
+    model="Qwen/Qwen2.5-72B-Instruct"
 )
 
 def get_local_city() -> str:
@@ -43,20 +45,21 @@ def fetch_weather_wttr(city: str = "") -> dict:
         data = response.json()
         current = data['current_condition'][0]
 
+        # FIX: Use .get() to safely extract values. If a key is missing, it returns "Unknown".
         return {
-            "temp_C": current['temp_C'],
-            "FeelsLikeC": current['FeelsLikeC'],
-            "windspeedKmph": current['windspeedKmph'],
-            "humidity": current['humidity'],
-            "cloudcover": current['cloudcover'],
-            "localObsDateTime": current['localObsDateTime']
+            "temp_C": current.get('temp_C', 'Unknown'),
+            "FeelsLikeC": current.get('FeelsLikeC', 'Unknown'),
+            "windspeedKmph": current.get('windspeedKmph', 'Unknown'),
+            "humidity": current.get('humidity', 'Unknown'),
+            "cloudcover": current.get('cloudcover', 'Unknown'),
+            "localObsDateTime": current.get('localObsDateTime', 'Unknown')
         }
     
     # 3. If wttr.in times out or crashes, automatically fall back to OpenWeather
     except requests.exceptions.RequestException as e:
         print(f"[System] wttr.in failed! Falling back to OpenWeather... (Error: {e})")
 
-        #OPENWEATHERAPI
+        # OPENWEATHERAPI
         OpenWeatherApi = os.getenv("OpenWeather_API_KEY")
         if not OpenWeatherApi:
             return {"error": "OpenWeatherApi not found in env variables."}
@@ -65,16 +68,16 @@ def fetch_weather_wttr(city: str = "") -> dict:
         try:
             ow_response = requests.get(ow_url, timeout=5)
             ow_data = ow_response.json()
+            # Also using .get() here for safety
             return {
                 "source": "OpenWeather API",
                 "city": city,
-                "temp_C": ow_data['main']['temp'],
-                "humidity": ow_data['main']['humidity']
+                "temp_C": ow_data.get('main', {}).get('temp', 'Unknown'),
+                "humidity": ow_data.get('main', {}).get('humidity', 'Unknown')
             }
         except Exception as critical_error:
             # 4. If BOTH fail, return a clean error string for the LLM to read
-            return {"error": "Both weather services are currently offline."}
-
+            return {"error": f"Both weather services failed. Critical Error: {critical_error}"}
 
 class FetchWeatherWttrArgs(BaseModel):
     city: str = Field(
@@ -111,22 +114,37 @@ class Agent:
             self.messages.append({"role": "assistant", "content": final_assistant_content})
 
         return final_assistant_content
+
     def execute(self):
         while True:
             completion = self.client.chat.completions.create(
                 messages=self.messages,
                 tools=self.tools,
-                tool_choice="auto" # Let the model decide when to call tools.
+                tool_choice="auto" 
             )
 
             response_message = completion.choices[0].message
 
             if response_message.tool_calls:
-                self.messages.append(response_message)
-            # tools responses comes only after tool call, 
-            # and if your agent don't has in his history it tool calls, it won't be able to respond.
+                # FIX 2: Convert Pydantic object to a clean standard dictionary 
+                # to prevent JSON serialization errors on subsequent loops.
+                safe_message = {
+                    "role": response_message.role,
+                    "content": response_message.content or "", 
+                    "tool_calls": [
+                        {
+                            "id": tc.id,
+                            "type": tc.type,
+                            "function": {
+                                "name": tc.function.name,
+                                "arguments": tc.function.arguments
+                            }
+                        } for tc in response_message.tool_calls
+                    ]
+                }
+                self.messages.append(safe_message)
 
-                tool_outputs =[]
+                tool_outputs = []
                 for tool_call in response_message.tool_calls:
                     function_name = tool_call.function.name
                     function_args = json.loads(tool_call.function.arguments)
@@ -137,14 +155,14 @@ class Agent:
                     if function_name in globals() and callable(globals()[function_name]):
                         function_to_call = globals()[function_name]
                         executed_output = function_to_call(**function_args)
-                        tool_output_content = str(executed_output) # Ensure output is a string.
-                        print(f"Executing tool: {function_name} with args {function_args}, Output: {tool_output_content[:500]}...") # Debug print
+                        tool_output_content = str(executed_output) 
+                        print(f"Executing tool: {function_name} with args {function_args}, Output: {tool_output_content[:500]}...") 
 
                     tool_outputs.append(
                         {
                             "tool_call_id": tool_call.id,
                             "role": "tool",
-                            "name": function_name,
+                            # FIX 3: Removed the deprecated "name" key to match standard API specifications
                             "content": tool_output_content,
                         }
                     )
@@ -165,7 +183,7 @@ tools = [schema]
 
 agent = Agent(client, system, tools)
 
-response = agent("What is the weather in patliputra like now?")
+response = agent("What is the weather in Haridwar now?")
 
 print(f"final answer: {response}")
 

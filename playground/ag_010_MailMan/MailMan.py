@@ -16,7 +16,7 @@ if not HF_TOKEN:
     raise ValueError("HF_TOKEN is not accessible from environment variables.")
 client = InferenceClient(
     api_key=HF_TOKEN,
-    model="moonshotai/Kimi-K2-Thinking"
+    model="Qwen/Qwen2.5-72B-Instruct"
 )
 
 
